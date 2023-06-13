@@ -63,7 +63,7 @@ def Shotter_change_mode(pulse_n):
 # --- Labview --- #
 
 Labview_Buttom = {
-	"main_Buttom": (32, 130),
+    "main_Buttom": (32, 130),
     "SET_ZERO": (453, 214),
     "HOME": (542, 214),
 
@@ -79,7 +79,7 @@ Labview_Buttom = {
 
 
     "energy_adjustment": (550, 339),
-    "power_step": (550, 393),
+    "power_step": (550, 390),
 
 
     "Read_RTO": (674, 192),
@@ -95,15 +95,17 @@ Labview_Buttom = {
     "rest": (842, 446),
 
     "row_data": (386, 627),
-    "save": (252, 854),
-    "file_name": (420, 845),
-    "folder_path": (420, 885)
+    "save": (252, 864),
+    "file_name": (420, 861),
+    "folder_path": (420, 900)
 }
 
 def back_to_Labview():
+
+    back_to_Shotter()
     pyautogui.moveTo(x=113, y=17, duration=0.3)
     pyautogui.click()
-    pyautogui.sleep(0.1)
+    pyautogui.sleep(0.5)
 
 
 def Labview_start_and_save(file_name):
@@ -121,13 +123,11 @@ def Labview_setup(dx, dy, delta_power, folder):
     '''
     設置 dx, dy, Auto dx, dy.
     設置 delta_power
-
         setting:
         Stage    : dx = 1.5delta_x, dy = delta_x
         Auto mode: delta_x=delta_x, delta_y=0
         energy   : 設置好
         N        : 3
-
     power_change: 轉軸刻度
     '''
     back_to_Labview()
@@ -235,11 +235,11 @@ def find_file(file_name, wait_total_time, delta_time):
             break
 
         elif check_file(folder, f'{file_name}.txt') == True:
-            print("Success!!, keep going!")
+            print(f"{file_name}, Success!")
             break
 
         pyautogui.sleep(delta_time)
-        print(f"waiting time = {(wait_total_time+count_time*delta_time)/60} min")
+        print(f"waiting {file_name} for {(wait_total_time+count_time*delta_time)/60} min")
 
 
 def check_energy():
@@ -274,19 +274,14 @@ def Labview_start_working(dx, delta_power):
     前置：
     back_to_Labview
     delta_x=更改成與「experiment_one_row」一致
-
     loop:
     1. 調整 mode
         將 mode 調整成 N = shutter_list[N]。
-
     2. 移動 1.5delta_x
-
     3. 開始打洞
         start_and_save
         使用 {Shotter_number} 存擋
-
     4. 查看檔案是否存在
-
     '''
     global experiment_row_number
     back_to_Labview()
@@ -333,7 +328,7 @@ def HOME_GOy_SET_ZERO():
 
 folder = "C:\\Local Disk D_2192023324\\K.Y. Chen\\20230612\\data"
 experiment_row_number = 1
-shutter_list = np.array([2, 3, 4, 5, 6, 8, 10, 15, 20, 30, 40, 50, 100])
+shutter_list = np.array([2, 3, 4, 5, 6, 8, 10, 15, 20, 30, 40, 50, 100, 500])
 
 
 def experiment_one_row(dx, dy):
@@ -345,7 +340,7 @@ def experiment_one_row(dx, dy):
 
         # energy 測試, 找檔案, 查看能量
         Labview_test_energy(delta_power=15)
-        find_file(f"energy_{experiment_row_number}", wait_total_time=40, delta_time=5)
+        find_file(f"energy_{experiment_row_number}", wait_total_time=25, delta_time=5)
         # check_energy(abs_file_path, up_data) # 測試檔案時，註解。
         Labview_start_working(dx=dx, delta_power=15)
         HOME_GOy_SET_ZERO()
