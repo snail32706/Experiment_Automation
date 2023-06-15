@@ -2,7 +2,7 @@ import numpy as np
 import pyautogui
 import pygetwindow as gw
 # import win32gui
-import pygame
+# import pygame
 import sys
 import time
 import os
@@ -34,17 +34,24 @@ def Code_Stop():
 
 
 # --- Shotter --- #
-def back_to_Shotter():
-    gw.getWindowsWithTitle("SSH-C2B Demo Software (Advanced Mode) v1.0.0.2")[0].activate()
+
+
+
+def back_to_Shotter(first=None):
+    window = gw.getWindowsWithTitle("SSH-C2B Demo Software (Advanced Mode) v1.0.0.2")[0]
+    window.activate()
+    # gw.getWindowsWithTitle("SSH-C2B Demo Software (Advanced Mode) v1.0.0.2")[0].activate()
     pyautogui.sleep(0.1)
 
-    active_window = gw.getActiveWindow()
-    return active_window.left, active_window.top
+    if first is not None:
+        active_window = gw.getActiveWindow()
+        return active_window.left, active_window.top
 
 
 def Shotter_change_mode(pulse_n):
     # 使用相對位置, 不需要理會視窗放在哪
-    left_located, top_located = back_to_Shotter()
+    # left_located, top_located = back_to_Shotter()
+    global left_located, top_located 
 
     # setting -> load
     pyautogui.moveTo(x=left_located+94, y=top_located+35, duration=0.1)
@@ -94,7 +101,7 @@ Labview_Buttom = {
     "START": (797, 311),
     "rest": (842, 446),
 
-    "row_data": (386, 627),
+    "row_data": (386, 637),
     "save": (252, 864),
     "file_name": (420, 861),
     "folder_path": (420, 900)
@@ -103,9 +110,12 @@ Labview_Buttom = {
 def back_to_Labview():
 
     back_to_Shotter()
+    # window = gw.getWindowsWithTitle("0824 - 複製.vi")[0]
+    # window.activate()
+
     pyautogui.moveTo(x=113, y=17, duration=0.3)
     pyautogui.click()
-    pyautogui.sleep(0.5)
+    pyautogui.sleep(1)
 
 
 def Labview_start_and_save(file_name):
@@ -131,6 +141,8 @@ def Labview_setup(dx, dy, delta_power, folder):
     power_change: 轉軸刻度
     '''
     back_to_Labview()
+    pyautogui.moveTo(Labview_Buttom["rest"], duration=0.1)
+    pyautogui.click()
 
     pyautogui.moveTo(Labview_Buttom["main_Buttom"], duration=0.1)
     pyautogui.click()
@@ -143,13 +155,15 @@ def Labview_setup(dx, dy, delta_power, folder):
     pyautogui.sleep(0.1)
     pyautogui.moveTo(Labview_Buttom["dy_um"], duration=0.1)
     pyautogui.doubleClick()
-    pyautogui.typewrite(f"{1.5*dy}")
+    pyautogui.typewrite(f"{1*dy}")
     pyautogui.sleep(0.5)
 
     pyautogui.moveTo(Labview_Buttom["Auto_mode"], duration=0.9)
     pyautogui.click()
-    pyautogui.moveTo(Labview_Buttom["delta_x"], duration=0.1)
+
+    pyautogui.moveTo(Labview_Buttom["delta_x"], duration=0.2)
     pyautogui.doubleClick()
+    pyautogui.sleep(0.5)
     pyautogui.typewrite(f"{dx}")
     pyautogui.sleep(0.1)
     pyautogui.moveTo(Labview_Buttom["delta_y"], duration=0.1)
@@ -180,7 +194,7 @@ def Labview_setup(dx, dy, delta_power, folder):
     pyautogui.click()
     pyautogui.doubleClick()
     pyautogui.typewrite(f"{folder}")
-    pyautogui.sleep(0.1)
+    pyautogui.sleep(2)
     pyautogui.press("enter")
     pyautogui.sleep(0.1)
 
@@ -191,10 +205,13 @@ def Labview_test_energy(delta_power):
     2. delta_x=0, 在相同的點打洞
     '''
     Shotter_change_mode(10)
+    back_to_Labview()
+
     pyautogui.moveTo(Labview_Buttom["delta_x"], duration=0.1)
     pyautogui.doubleClick()
-    pyautogui.typewrite(f"0")
-    pyautogui.sleep(0.1)
+    pyautogui.sleep(0.5)
+    pyautogui.typewrite("0")
+    pyautogui.sleep(0.5)
 
     # 轉軸刻度
     pyautogui.moveTo(Labview_Buttom["power_step"], duration=0.2)
@@ -232,11 +249,22 @@ def find_file(file_name, wait_total_time, delta_time):
         if count_time > 20:
             # Code_Stop() # 終止程式
             print("等待太久時間，找不到檔案")
+            # Code_Stop()
             break
 
         elif check_file(folder, f'{file_name}.txt') == True:
-            print(f"{file_name}, Success!")
-            break
+            '''
+            「file_name」命名規則:
+                實驗打洞: f"row_{experiment_row_number}_n{Shotter_number}"
+                測量能量: f"energy_{experiment_row_number}"
+            '''
+            if 'energy' in file_name:
+                print(f"Energy check. Correct! \nrow={experiment_row_number}. Start experiment:")
+
+            elif 'n_' in file_name:
+                _, pulse_number = file_namesplit('_n')
+                print(f"row={experiment_row_number} N={pulse_number}, Success!")
+            break 
 
         pyautogui.sleep(delta_time)
         print(f"waiting {file_name} for {(wait_total_time+count_time*delta_time)/60} min")
@@ -285,7 +313,7 @@ def Labview_start_working(dx, delta_power):
     '''
     global experiment_row_number
     back_to_Labview()
-    pyautogui.moveTo(Labview_Buttom["delta_x"], duration=0.1)
+    pyautogui.moveTo(Labview_Buttom["delta_x"], duration=0.5)
     pyautogui.doubleClick()
     pyautogui.typewrite(f"{dx}")
     pyautogui.sleep(0.1)
@@ -301,21 +329,22 @@ def Labview_start_working(dx, delta_power):
         # 2. 移動 1.5delta_x
         pyautogui.moveTo(Labview_Buttom["GOx"], duration=0.1)
         pyautogui.click()
-        pyautogui.sleep(1)
+        pyautogui.sleep(2)
 
         # 3. start
         Labview_start_and_save(file_name=file_name)
         pyautogui.sleep(1)
 
         # 4. 查看檔案是否存在
-        find_file(file_name=file_name, wait_total_time=40, delta_time=5)
+        find_file(file_name=file_name, wait_total_time=30, delta_time=5)
+
 
 
 def HOME_GOy_SET_ZERO():
     pyautogui.moveTo(Labview_Buttom["HOME"], duration=0.3)
     pyautogui.click()
-    pyautogui.sleep(90)  # wait 90 sencond
-    pyautogui.moveTo(Labview_Buttom["Backy"], duration=0.3)
+    pyautogui.sleep(60)  # wait 90 sencond
+    pyautogui.moveTo(Labview_Buttom["GOy"], duration=0.3)
     pyautogui.click()
     pyautogui.sleep(2)
     pyautogui.moveTo(Labview_Buttom["SET_ZERO"], duration=0.3)
@@ -326,28 +355,30 @@ def HOME_GOy_SET_ZERO():
 # ----------------- ----------------- ----------------- #
 # ----------------- ----------------- ----------------- #
 
-folder = "C:\\Local Disk D_2192023324\\K.Y. Chen\\20230612\\data"
-experiment_row_number = 1
+folder = "C:\\Local Disk D_2192023324\\K.Y. Chen\\20230614\\data"
+experiment_row_number = 2
 shutter_list = np.array([2, 3, 4, 5, 6, 8, 10, 15, 20, 30, 40, 50, 100, 500])
-
+left_located, top_located = back_to_Shotter(first='yes')
 
 def experiment_one_row(dx, dy):
 
     global experiment_row_number, folder
-    Labview_setup(dx=dx, dy=dy, delta_power=15, folder=folder)
+    Labview_setup(dx=dx, dy=dy, delta_power=10, folder=folder)
 
-    for i in range(1):  # 更改 row 數量，預計做 20 個能量
+    # for i in range(9):  # 更改 row 數量，預計做 20 個能量
 
-        # energy 測試, 找檔案, 查看能量
-        Labview_test_energy(delta_power=15)
-        find_file(f"energy_{experiment_row_number}", wait_total_time=25, delta_time=5)
-        # check_energy(abs_file_path, up_data) # 測試檔案時，註解。
-        Labview_start_working(dx=dx, delta_power=15)
-        HOME_GOy_SET_ZERO()
+    #     # energy 測試, 找檔案, 查看能量
+    #     Labview_test_energy(delta_power=15)
+    #     find_file(f"energy_{experiment_row_number}", wait_total_time=25, delta_time=5)
+    #     # check_energy(abs_file_path, up_data) # 測試檔案時，註解。
+    #     Labview_start_working(dx=dx, delta_power=15)
+    #     HOME_GOy_SET_ZERO()
 
-        experiment_row_number += 1
+    #     pyautogui.moveTo(Labview_Buttom["energy_adjustment"], duration=0.9) 
+    #     pyautogui.click(); pyautogui.sleep(2)
+    #     experiment_row_number += 1
 
 
 
 if __name__ == '__main__':
-    experiment_one_row(dx=70, dy=70)
+    experiment_one_row(dx=40, dy=40)
