@@ -1,40 +1,37 @@
-## 使用 PyAutoGUI 控制實驗
+## 使用 PyAutoGUI 達到電腦代替人使用 Labview
 
-count_row = 1
-#### 打動程序
-先在最上排打上記號每三組一行（間隔為 Δx），打完三組換一個 pulse number（間隔為 1.5*Δx）。
-每個檔案都會存擋，檔名會是先放在一個 list，每次打洞會等待預設的 delay time, 
-然後對 folder 檢查 檔案是否已經存擋，如果已經存擋，則移動 1.5*Δx，並執行下三個洞。
-count_row += 1
+### code 架構
+- 實驗目的:
+此實驗的參數變因有power、pulse number、pulse width，為了可以更好的控制變因，
+將原先 power dependence 的實驗，fix pulse energy 變因改為 pulse number。
 
-#### 一排打洞完成後
-每當執行到最後一個 list，將回到 "Home" ，並且移動 count_row*Δy。
+- 程式邏輯:
+將Labview 大部分的按鈕相對位置（螢幕解析度為1080p）放在`Labview_Buttom` 中，
+先在 OM 下最左邊打一個能量測試的洞，將能量檢測存擋為 'energy_N'，
+檢測檔案是否存在，能量是否正常。
+開始做實驗，先以較強的能量在最上排打一排標記點，每組不同的 pulse number 相距 1.5Δx， 
+將相同的數據做完 RTO 依照 f"row_{experiment_row_number}_n{Shotter_number}  存擋。
+檢查檔案存在後，換下一組。
+做完一個 row 後，回到原點移動 Δy 並重新設置原點。
 
-#### 更改能量
-使用最後一個 pulse number 計算能量使否正確，
-首先，將 Δx 更改為 0，
-然後，將檔名更改為 Read_RTO_energy_{count_row}，並開始執行
-經過 delay time, 閱讀剛剛的 Read_RTO_energy_row{count_row}.txt。
-確認能量是否在正常的範圍，
-若不正確停止程序，並且發出警報聲。
+### code 細節
+- 程式問題
+原先以`pygetwindow`切換畫面，因為此 package 不穩定，
+因此將切換畫面改由「工作列第一個」與「工作列第二個」控制。
+注意: 若畫面已經為第一個工作視窗，點選會將視窗縮小。
 
-#### 繼續打洞
-移動 1.5*Δx。
-執行打洞。
 
 ### 準備工作
 ##### - 測試：
     以不同能量的 pulse，看看最弱的雷射可否打出 LIPSS
     # check_energy(abs_file_path, up_data) # 測試檔案時，註解。
     確認 X, Y 移動方向
-##### - 開始：
+    
+##### - 先前設置
     1. Labview 放在「最左邊」
-    2. MAIN 放在「左上角」
+    2. MAIN 字體邊緣切齊「左上角」
     3. 準備好 最弱的 energy，檔名為 energy_0
     4. 修改 folder 「日期」。
-    5. check_energy(abs_file_path, up_data)
-    
-##### - 正式：
-    更改
-    「# Code_Stop() # 終止程式」 ----> 「 Code_Stop() # 終止程式」
 
+##### - 正式：
+    打標記點確認穩定度。
